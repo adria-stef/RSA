@@ -1,47 +1,34 @@
 package fmi.adii.ecalculator;
 
 import org.apfloat.Apfloat;
-import org.apfloat.ApfloatMath;
 import org.apfloat.Apint;
-import org.apfloat.ApintMath;
 
 public class Calculator {
 
-	private static final int PRECISION = 100;
+    private static final int PRECISION = 100;
 
-	public static void main(String[] args) {
+    public static void main(String[] args) {
 
-		Apfloat e = calculate(2000);
-		System.out.println("e ~ " + e.toString());
+        Apfloat e = calculate(1000);
+        System.out.println("e ~ " + e.toString());
+    }
 
-	}
+    private static Apfloat calculate(int k) {
 
-	private static Apfloat calculate(int k) {
+        long start = System.currentTimeMillis();
 
-		long start = System.currentTimeMillis();
+        Apfloat sum = new Apfloat(3, PRECISION);
+        Apint factorial = new Apint(1);
+        for (int i = 1; i <= k; i++) {
+            Apfloat nominator = new Apfloat(3 - (4 * i * i));
+            factorial = factorial.multiply(new Apint(2 * i * (2 * i + 1)));
+            sum = sum.add(nominator.divide(new Apfloat(factorial.toBigInteger(), PRECISION)));
+        }
 
-		Apfloat sum = new Apfloat(0, PRECISION);
+        long end = System.currentTimeMillis();
+        System.out.println(end - start);
 
-		for (int i = 0; i <= k; i++) {
-			sum = sum.add(calucalateOne(i));
-		}
+        return sum;
+    }
 
-		long end = System.currentTimeMillis();
-
-		System.out.println(end - start);
-		return sum;
-	}
-
-	private static Apfloat calucalateOne(int i) {
-
-		Apfloat apfloatI = new Apfloat(i);
-
-		Apfloat nominator = new Apfloat(3).subtract(ApfloatMath
-				.pow(apfloatI, 2).multiply(new Apfloat(4)));
-
-		Apint factorial = ApintMath.factorial(2 * i + 1);
-
-		return nominator
-				.divide(new Apfloat(factorial.toBigInteger(), PRECISION));
-	}
 }
