@@ -1,34 +1,57 @@
 package fmi.adii.ecalculator;
 
 import org.apfloat.Apfloat;
-import org.apfloat.Apint;
 
 public class Calculator {
 
-    private static final int PRECISION = 100;
+	public static void main(String[] args) throws Exception {
+		Calculator calculator = new Calculator();
 
-    public static void main(String[] args) {
+		for (int current = 1; current <= 8; current += 1) {
+			calculator.calculate(15000, current);
+		}
+	}
 
-        Apfloat e = calculate(1000);
-        System.out.println("e ~ " + e.toString());
-    }
+	private void calculate(int p, int t) throws InterruptedException {
 
-    private static Apfloat calculate(int k) {
+		long startTime = System.currentTimeMillis();
 
-        long start = System.currentTimeMillis();
+		CalculatorThread[] calculatorThreads = execute(p, t);
+		Apfloat e = calculateResult(t, calculatorThreads);
 
-        Apfloat sum = new Apfloat(3, PRECISION);
-        Apint factorial = new Apint(1);
-        for (int i = 1; i <= k; i++) {
-            Apfloat nominator = new Apfloat(3 - (4 * i * i));
-            factorial = factorial.multiply(new Apint(2 * i * (2 * i + 1)));
-            sum = sum.add(nominator.divide(new Apfloat(factorial.toBigInteger(), PRECISION)));
-        }
+		long endTime = System.currentTimeMillis();
 
-        long end = System.currentTimeMillis();
-        System.out.println(end - start);
+		System.out.println("Total time: " + (endTime - startTime));
+		System.out.println(e);
+	}
 
-        return sum;
-    }
+	private Apfloat calculateResult(int t, CalculatorThread[] calculatorThreads) {
+		Apfloat e = Apfloat.ZERO;
+
+		for (int i = 0; i < t; i++) {
+			e = e.add(calculatorThreads[i].getGrandSum());
+		}
+
+		return e;
+	}
+
+	private CalculatorThread[] execute(int p, int t) throws InterruptedException {
+
+		CalculatorThread[] calculatorThreads = new CalculatorThread[t];
+
+		for (int i = 0; i < t; i++) {
+			calculatorThreads[i] = new CalculatorThread(p, t, i);
+		}
+
+		for (int i = 0; i < t; i++) {
+			calculatorThreads[i].start();
+		}
+
+		for (int i = 0; i < t; i++) {
+			calculatorThreads[i].join();
+		}
+
+		return calculatorThreads;
+	}
 
 }
