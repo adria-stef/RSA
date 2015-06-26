@@ -31,7 +31,7 @@ public class Constants {
 	
 	public static final String  MESSAGE_COULD_NOT_WRITE_IN_FILE_FORMAT = "Could not write in file [%s].";
 	public static final String  MESSAGE_THREAD_TIME_FORMAT             = "Thread took [%s] milliseconds.";
-	public static final String MESSAGE_TOTAL_TIME_FORMAT               = "Total time: [%s]";
+	public static final String MESSAGE_TOTAL_TIME_FORMAT               = "Total time with %s threads: [%s]";
 	public static final String MESSAGE_E_RESULT_FORMAT                 = "Value of e is ~ %s";
 
 }

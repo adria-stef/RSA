@@ -27,8 +27,16 @@ public class Calculator {
 
 		Calculator calculator = new Calculator();
 
+		long startTime;
+		long endTime;
 		for (int current = 1; current <= tasks; current += 1) {
-			calculator.calculate(maxMember, current);
+			startTime = System.currentTimeMillis();
+
+			Apfloat e = calculator.calculate(maxMember, current);
+
+			endTime = System.currentTimeMillis();
+
+			createOutput(e, (endTime - startTime), current);
 		}
 	}
 
@@ -56,15 +64,11 @@ public class Calculator {
 		}
 	}
 
-	private void calculate(int maxMember, int tasks) throws InterruptedException {
-		long startTime = System.currentTimeMillis();
+	private Apfloat calculate(int maxMember, int tasks) throws InterruptedException {
 
 		CalculatorThread[] calculatorThreads = execute(maxMember, tasks);
-		Apfloat e = calculateResult(tasks, calculatorThreads);
+		return calculateResult(tasks, calculatorThreads);
 
-		long endTime = System.currentTimeMillis();
-
-		createOutput(e, (endTime - startTime));
 	}
 
 	private CalculatorThread[] execute(int maxMember, int tasks) throws InterruptedException {
@@ -73,7 +77,8 @@ public class Calculator {
 		FactorialCache factorialCache = new FactorialCache();
 
 		for (int i = 0; i < tasks; i++) {
-			calculatorThreads[i] = new CalculatorThread(maxMember, calculatorManager, factorialCache, precision, fileName);
+			calculatorThreads[i] = new CalculatorThread(maxMember, calculatorManager, factorialCache, precision,
+					fileName);
 		}
 
 		for (int i = 0; i < tasks; i++) {
@@ -97,8 +102,8 @@ public class Calculator {
 		return e;
 	}
 
-	private void createOutput(Apfloat e, long time) {
-		String totalTimeMessage = String.format(MESSAGE_TOTAL_TIME_FORMAT, time);
+	private static void createOutput(Apfloat e, long time, int current) {
+		String totalTimeMessage = String.format(MESSAGE_TOTAL_TIME_FORMAT, current, time);
 
 		if (quiet) {
 			System.out.println(totalTimeMessage);
