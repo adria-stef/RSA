@@ -1,11 +1,13 @@
 package fmi.adii.ecalculator.cache;
 
-import static fmi.adii.ecalculator.cache.util.Constants.DEFAULT_PRECISION;
+import static fmi.adii.ecalculator.cache.util.Constants.*;
 
 import java.util.Map.Entry;
 
 import org.apfloat.Apfloat;
 import org.apfloat.Apint;
+
+import fmi.adii.ecalculator.cache.util.IOUtil;
 
 public class CalculatorThread extends Thread {
 
@@ -13,19 +15,26 @@ public class CalculatorThread extends Thread {
 	private CalculatorManager calculatorManager;
 	private FactorialCache factorialCache;
 	private int precision;
-	private Apfloat grandSum = new Apfloat(0, DEFAULT_PRECISION);
+	private String fileName;
+	private Apfloat grandSum = new Apfloat(0, DEFAULT_PRECISION_VALUE);
 
-	public CalculatorThread(int p, CalculatorManager calculatorManager, FactorialCache factorialCache, int precision) {
-		this.maxMember = p;
+	public CalculatorThread(int maxMember, CalculatorManager calculatorManager, FactorialCache factorialCache,
+			int precision, String fileName) {
+		this.maxMember = maxMember;
 		this.calculatorManager = calculatorManager;
 		this.factorialCache = factorialCache;
 		this.precision = precision;
+		this.fileName = fileName;
+	}
+
+	public Apfloat getGrandSum() {
+		return grandSum;
 	}
 
 	@Override
 	public void run() {
 
-		long start = System.currentTimeMillis();
+		long startTime = System.currentTimeMillis();
 
 		int index = calculatorManager.getNextIndex();
 
@@ -47,12 +56,15 @@ public class CalculatorThread extends Thread {
 			index = calculatorManager.getNextIndex();
 		}
 
-		long end = System.currentTimeMillis();
-		System.out.println("thread " + " time is " + (end - start));
+		long endTime = System.currentTimeMillis();
+
+		writeInFileIfNecessary(endTime - startTime);
 	}
 
-	public Apfloat getGrandSum() {
-		return grandSum;
+	private void writeInFileIfNecessary(long time) {
+		if (null != fileName) {
+			IOUtil ioUtil = IOUtil.getInstance();
+			ioUtil.writeWithNewLine(String.format(MESSAGE_THREAD_TIME_FORMAT, time), fileName);
+		}
 	}
-	
 }
