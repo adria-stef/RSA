@@ -1,46 +1,62 @@
 package fmi.adii.ecalculator;
 
+import static fmi.adii.ecalculator.util.Constants.DEFAULT_PRECISION_VALUE;
+import static fmi.adii.ecalculator.util.Constants.MESSAGE_THREAD_TIME_FORMAT;
+
 import org.apfloat.Apfloat;
 import org.apfloat.Apint;
 import org.apfloat.ApintMath;
 
+import fmi.adii.ecalculator.util.IOUtil;
+
 public class CalculatorThread extends Thread {
 
-	private static final int PRECISION = 100;
-
-	private int p;
-	private int t;
+	private int maxMember;
+	private int tasks;
 	private int threadIndex;
-	private Apfloat grandSum = new Apfloat(0, PRECISION);
+	private int precision;
+	private String fileName;
 
-	public CalculatorThread(int p, int t, int threadIndex) {
-		this.p = p;
-		this.t = t;
+	private Apfloat grandSum = new Apfloat(0, DEFAULT_PRECISION_VALUE);
+
+	public CalculatorThread(int maxMember, int tasks, int threadIndex, int precision, String fileName) {
+		this.maxMember = maxMember;
+		this.tasks = tasks;
 		this.threadIndex = threadIndex;
+		this.precision = precision;
+		this.fileName = fileName;
 	}
 
 	@Override
 	public void run() {
 
-		long start = System.currentTimeMillis();
+		long startTime = System.currentTimeMillis();
 
-		int factorialDiffCount = 2 * t;
+		int factorialDiffCount = 2 * tasks;
 		Apint factorial = ApintMath.factorial(2 * threadIndex + 1);
 
-		for (int i = threadIndex; i <= p; i += t) {
+		for (int i = threadIndex; i <= maxMember; i += tasks) {
 			Apfloat nominator = new Apfloat(3 - (4 * i * i));
-			grandSum = grandSum.add(nominator.divide(new Apfloat(factorial.toString(), PRECISION)));
+			grandSum = grandSum.add(nominator.divide(new Apfloat(factorial.toString(), precision)));
 
-			Apint diff = Apint.ONE;
+			Apint difference = Apint.ONE;
 			for (int j = 0; j < factorialDiffCount; j++) {
-				diff = diff.multiply(new Apint(2 * i + 2 + j));
+				difference = difference.multiply(new Apint(2 * i + 2 + j));
 			}
 
-			factorial = factorial.multiply(diff);
+			factorial = factorial.multiply(difference);
 		}
 
-		long end = System.currentTimeMillis();
-		System.out.println("thread #" + threadIndex + " time is " + (end - start));
+		long endTime = System.currentTimeMillis();
+
+		writeInFileIfNecessary(endTime - startTime);
+	}
+
+	private void writeInFileIfNecessary(long time) {
+		if (null != fileName) {
+			IOUtil ioUtil = IOUtil.getInstance();
+			ioUtil.writeWithNewLine(String.format(MESSAGE_THREAD_TIME_FORMAT, threadIndex, time), fileName);
+		}
 	}
 
 	public Apfloat getGrandSum() {
