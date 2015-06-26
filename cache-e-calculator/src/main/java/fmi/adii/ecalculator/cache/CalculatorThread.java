@@ -24,7 +24,7 @@ public class CalculatorThread extends Thread {
 
 	@Override
 	public void run() {
-		System.out.println("precision is : " + precision);
+
 		long start = System.currentTimeMillis();
 
 		int index = calculatorManager.getNextIndex();
