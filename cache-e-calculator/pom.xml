@@ -12,7 +12,7 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<mainClass>fmi.adii.ecalculator.cache.Calculator</mainClass>
+							<mainClass>fmi.adii.ecalculator.cache.main.Main</mainClass>
 						</manifest>
 					</archive>
 					<descriptorRefs>

@@ -1,116 +1,92 @@
 package fmi.adii.ecalculator.cache;
 
-import static fmi.adii.ecalculator.cache.util.Constants.*;
-
 import org.apfloat.Apfloat;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.ParameterException;
-
-import fmi.adii.ecalculator.cache.util.IOUtil;
-import fmi.adii.ecalculator.cache.util.Parameters;
+import fmi.adii.ecalculator.cache.output.CalculatorOutput;
+import fmi.adii.ecalculator.cache.threads.CalculatorThread;
+import fmi.adii.ecalculator.cache.util.Constants;
+import fmi.adii.ecalculator.cache.util.FloatUtil;
 
 public class Calculator {
 
-	private static int maxMember;
-	private static int tasks;
-	private static int precision;
-	private static String fileName;
-	private static boolean quiet;
+	public int precision;
+	public int tasks;
+	private CalculatorOutput calculatorOutput;
 
-	private static IOUtil ioUtil;
+	private static FloatUtil floatUtil = FloatUtil.getInstance();
 
-	public static void main(String[] args) throws Exception {
-		ioUtil = IOUtil.getInstance();
-
-		initParameters(args);
-
-		Calculator calculator = new Calculator();
-
-		long startTime;
-		long endTime;
-		for (int current = 1; current <= tasks; current += 1) {
-			startTime = System.currentTimeMillis();
-
-			Apfloat e = calculator.calculate(maxMember, current);
-
-			endTime = System.currentTimeMillis();
-
-			createOutput(e, (endTime - startTime), current);
-		}
+	public Calculator(int precision, int tasks, CalculatorOutput calculatorOutput) {
+		this.precision = precision;
+		this.tasks = tasks;
+		this.calculatorOutput = calculatorOutput;
 	}
 
-	private static void initParameters(String[] args) {
-		Parameters parameters = new Parameters();
-		JCommander jCommander = new JCommander(parameters);
+	public void execute() {
 
+		long startTime = System.currentTimeMillis();
+
+		Apfloat e;
 		try {
-			jCommander.parse(args);
-
-			maxMember = parameters.getMaxMember();
-			tasks = parameters.getTasks();
-			precision = parameters.getPrecision();
-			quiet = parameters.getQuiet();
-			if (quiet) {
-				fileName = null;
-			} else {
-				fileName = parameters.getFileName();
-				ioUtil.checkAndDeleteIfFileExists(fileName);
-			}
-
-		} catch (ParameterException ex) {
-			System.out.println(MESSAGE_COULD_NOT_GET_PARAMETERS);
-			jCommander.usage();
+			e = calculate();
+		} catch (InterruptedException ex) {
+			throw new RuntimeException(Constants.MESSAGE_E_COULD_NOT_BE_CALCULATED);
 		}
+
+		long endTime = System.currentTimeMillis();
+
+		calculatorOutput.output(e, (endTime - startTime));
 	}
 
-	private Apfloat calculate(int maxMember, int tasks) throws InterruptedException {
+	private Apfloat calculate() throws InterruptedException {
 
-		CalculatorThread[] calculatorThreads = execute(maxMember, tasks);
-		return calculateResult(tasks, calculatorThreads);
+		CalculatorThread[] calculatorThreads = calculateInParallel();
+		return calculateResult(calculatorThreads);
 
 	}
 
-	private CalculatorThread[] execute(int maxMember, int tasks) throws InterruptedException {
+	private CalculatorThread[] calculateInParallel() throws InterruptedException {
+		CalculatorThread[] calculatorThreads = initThreads();
+
+		startThreads(calculatorThreads);
+
+		joinThreads(calculatorThreads);
+
+		return calculatorThreads;
+	}
+
+	private CalculatorThread[] initThreads() throws InterruptedException {
 		CalculatorThread[] calculatorThreads = new CalculatorThread[tasks];
+
 		CalculatorManager calculatorManager = new CalculatorManager();
 		FactorialCache factorialCache = new FactorialCache();
 
 		for (int i = 0; i < tasks; i++) {
-			calculatorThreads[i] = new CalculatorThread(maxMember, calculatorManager, factorialCache, precision,
-					fileName);
-		}
-
-		for (int i = 0; i < tasks; i++) {
-			calculatorThreads[i].start();
-		}
-
-		for (int i = 0; i < tasks; i++) {
-			calculatorThreads[i].join();
+			calculatorThreads[i] = new CalculatorThread(precision, calculatorManager, factorialCache, calculatorOutput);
 		}
 
 		return calculatorThreads;
 	}
 
-	private Apfloat calculateResult(int t, CalculatorThread[] calculatorThreads) {
+	private void startThreads(CalculatorThread[] calculatorThreads) {
+		for (int i = 0; i < tasks; i++) {
+			calculatorThreads[i].start();
+		}
+	}
+
+	private void joinThreads(CalculatorThread[] calculatorThreads) throws InterruptedException {
+		for (int i = 0; i < tasks; i++) {
+			calculatorThreads[i].join();
+		}
+	}
+
+	private Apfloat calculateResult(CalculatorThread[] calculatorThreads) {
 		Apfloat e = Apfloat.ZERO;
 
-		for (int i = 0; i < t; i++) {
+		for (int i = 0; i < tasks; i++) {
 			e = e.add(calculatorThreads[i].getGrandSum());
 		}
 
-		return e;
+		return floatUtil.round(e, precision);
 	}
 
-	private static void createOutput(Apfloat e, long time, int current) {
-		String totalTimeMessage = String.format(MESSAGE_TOTAL_TIME_FORMAT, current, time);
-
-		if (quiet) {
-			System.out.println(totalTimeMessage);
-		} else {
-			ioUtil.writeWithNewLine(totalTimeMessage, fileName);
-			ioUtil.writeWithNewLine(String.format(MESSAGE_E_RESULT_FORMAT, e), fileName);
-			ioUtil.writeWithNewLine("", fileName);
-		}
-	}
 }

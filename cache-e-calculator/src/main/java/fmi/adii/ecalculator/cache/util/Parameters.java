@@ -9,9 +9,6 @@ import com.beust.jcommander.Parameter;
 
 public class Parameters {
 
-	@Parameter(names = { LONG_NAME_MAX_MEMBER, SHORT_NAME_MAX_MEMBER }, required = false, description = DESCRIPTION_MAX_MEMBER)
-	private Integer maxMember = DEFAULT_MAX_MEMBER_VALUE;
-
 	@Parameter(names = { LONG_NAME_PRECISION, SHORT_NAME_PRECISION }, required = false, description = DESCRIPTION_PRECISION)
 	private Integer precision = DEFAULT_PRECISION_VALUE;
 
@@ -23,10 +20,6 @@ public class Parameters {
 
 	@Parameter(names = { LONG_NAME_QUIET, SHORT_NAME_QUIET }, required = false, description = DESCRIPTION_QUIET)
 	private Boolean quiet = DEFAULT_QUIET_VALUE;
-
-	public Integer getMaxMember() {
-		return maxMember;
-	}
 
 	public Integer getPrecision() {
 		return precision;
@@ -47,5 +40,5 @@ public class Parameters {
 	private String calculateDateTimeSuffix() {
 		return new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss").format(new Date());
 	}
-	
+
 }
